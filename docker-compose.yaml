@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: go-questions
+      POSTGRES_PASSWORD: go-questions
+      POSTGRES_DB: go-questions
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_go_questions:/var/lib/postgresql/data
+
+volumes:
+  postgres_data_go_questions: 
