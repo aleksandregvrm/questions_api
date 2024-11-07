@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -19,17 +18,9 @@ func ConnectDatabase() {
 		fmt.Println("Error occurred in .env file; please check.")
 	}
 
-	// Read environment variables for database configuration
-	host := os.Getenv("HOST")
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	user := "go-questions"
-	dbname := os.Getenv("DB_NAME")
-	pass := os.Getenv("PASSWORD")
+	dbUrl := os.Getenv("DATABASE_URL")
 
-	// Connection string setup
-	psqlSetup := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
-		host, port, user, dbname, pass)
-	db, errSql := sql.Open("postgres", psqlSetup)
+	db, errSql := sql.Open("postgres", dbUrl)
 	if errSql != nil {
 		fmt.Println("Error connecting to the database:", errSql)
 		panic(errSql)
@@ -59,15 +50,50 @@ func createTables() {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
+	userCreds := `
+	CREATE TABLE IF NOT EXISTS credentials (
+		id SERIAL PRIMARY KEY,
+		user_id INT REFERENCES users(id),
+		country VARCHAR(100) NOT NULL,
+		city VARCHAR(100) NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	`
+
+	createRegistrationsTable := `
+	CREATE TABLE IF NOT EXISTS user_registrations (
+	id SERIAL PRIMARY KEY,
+	user_id INTEGER,
+	credentials_id INTEGER,
+	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (credentials_id) REFERENCES credentials(id)
+	)
+	`
+
+	// Users Table
 	_, err := Db.Exec(userTable)
 	if err != nil {
 		fmt.Println("Error creating users table:", err)
 	}
 
+	// Credentials Table
+	_, err = Db.Exec(userCreds)
+	if err != nil {
+		fmt.Println("Error creating credentials table:", err)
+	}
+
+	// Questions Table
 	_, err = Db.Exec(questionsTable)
 	if err != nil {
 		fmt.Println("Error creating questions table:", err)
 	} else {
 		fmt.Println("Tables created or already exist!")
+	}
+
+	// user_cred registration
+	_, err = Db.Exec(createRegistrationsTable)
+
+	if err != nil {
+		panic("Could not create registrations table.")
 	}
 }
