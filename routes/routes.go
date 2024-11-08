@@ -1,10 +1,11 @@
 package routes
 
 import (
-	"example.com/questions/models"
+	controller "example.com/questions/controllers"
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(route *gin.Engine) {
-	route.POST("/add", models.AddUser)
+	route.POST("/register", controller.RegisterUser)
+	route.POST("/login")
 }

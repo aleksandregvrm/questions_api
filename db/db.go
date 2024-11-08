@@ -47,6 +47,7 @@ func createTables() {
 		id SERIAL PRIMARY KEY,
 		user_id INT REFERENCES users(id),
 		question_text TEXT NOT NULL,
+		answers JSONB NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 

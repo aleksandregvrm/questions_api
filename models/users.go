@@ -3,9 +3,9 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	database "example.com/questions/db"
+	"example.com/questions/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,26 +14,22 @@ type User struct {
 	Password string `binding:"required"`
 }
 
-func AddUser(ctx *gin.Context) {
+func AddUser(userData *User) error {
 	body := User{}
-	data, err := ctx.GetRawData()
-
+	byteData, err := json.Marshal(userData)
 	if err != nil {
-		ctx.AbortWithStatusJSON(400, "User is not defined")
-		return
+		return utils.NewCustomError("Internal server error", 500)
 	}
-	err = json.Unmarshal(data, &body)
+	err = json.Unmarshal(byteData, body)
 	if err != nil {
-		ctx.AbortWithStatusJSON(400, "Bad Input")
-		return
+		return utils.NewCustomError("Invalid data", 400)
 	}
-
 	_, err = database.Db.Exec("insert into users(username,password) values ($1,$2)", body.Username, body.Password)
 	if err != nil {
 		fmt.Println(err)
-		ctx.AbortWithStatusJSON(400, "Couldn't create the new user.")
+		return utils.NewCustomError("couldn't create the new user", 500)
 	} else {
-		ctx.JSON(http.StatusOK, "User is successfully created.")
+		return nil
 	}
 
 }
