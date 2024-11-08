@@ -14,17 +14,8 @@ type User struct {
 	Password string `binding:"required"`
 }
 
-func AddUser(userData *User) error {
-	body := User{}
-	byteData, err := json.Marshal(userData)
-	if err != nil {
-		return utils.NewCustomError("Internal server error", 500)
-	}
-	err = json.Unmarshal(byteData, body)
-	if err != nil {
-		return utils.NewCustomError("Invalid data", 400)
-	}
-	_, err = database.Db.Exec("insert into users(username,password) values ($1,$2)", body.Username, body.Password)
+func (u *User) AddUser() error {
+	_, err := database.Db.Exec("insert into users(username,password) values ($1,$2)", u.Username, u.Password)
 	if err != nil {
 		fmt.Println(err)
 		return utils.NewCustomError("couldn't create the new user", 500)
@@ -34,20 +25,29 @@ func AddUser(userData *User) error {
 
 }
 
-func LoginUser(ctx *gin.Context) {
-	body := User{}
-	data, err := ctx.GetRawData()
-
+func (u *User) LoginUser() error {
+	if len(u.Password) < 8 {
+		return utils.NewCustomError("Invalid credentials", 400)
+	}
+	dbUser, err := getSingleUser(u.Username)
 	if err != nil {
-		ctx.AbortWithStatusJSON(400, "User is not defined")
-		return
+		return utils.NewCustomError("Invalid Credentials", 400)
 	}
-	err = json.Unmarshal(data, &body)
-	if len(body.Password) < 8 {
-		ctx.AbortWithStatusJSON(400, "Invalid credentials, password should be longer")
-		return
+	if !utils.ComparePasswords(u.Password, dbUser.Password) {
+		return utils.NewCustomError("Invalid Credentials", 400)
 	}
+	return nil
+}
 
+func getSingleUser(username string) (*User, error) {
+	var user User
+	query := "SELECT * FROM users WHERE username = ?"
+	row := database.Db.QueryRow(query, username)
+	err := row.Scan(&user.Username, &user.Password)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func UpdateUserInfo(ctx *gin.Context) {
