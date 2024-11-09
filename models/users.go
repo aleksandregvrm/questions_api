@@ -15,13 +15,23 @@ type User struct {
 }
 
 func (u *User) AddUser() error {
-	_, err := database.Db.Exec("insert into users(username,password) values ($1,$2)", u.Username, u.Password)
+	query := "INSERT INTO users(email, password) VALUES (?, ?)"
+	stmt, err := database.Db.Prepare(query)
+
 	if err != nil {
-		fmt.Println(err)
-		return utils.NewCustomError("couldn't create the new user", 500)
-	} else {
-		return nil
+		return err
 	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(u.Username, u.Password)
+
+	if err != nil {
+		return err
+	}
+	fmt.Println(result)
+
+	return err
 
 }
 
@@ -40,6 +50,7 @@ func (u *User) LoginUser() error {
 }
 
 func getSingleUser(username string) (*User, error) {
+
 	var user User
 	query := "SELECT * FROM users WHERE username = ?"
 	row := database.Db.QueryRow(query, username)

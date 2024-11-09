@@ -12,14 +12,10 @@ import (
 func RegisterUser(context *gin.Context) {
 
 	newUser := models.User{}
-	data, err := context.GetRawData()
+	err := context.ShouldBindJSON(&newUser)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data provided"})
-	}
-	err = json.Unmarshal(data, newUser)
-
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": "Error with processing data"})
+		return
 	}
 
 	err = newUser.AddUser()
@@ -39,6 +35,8 @@ func LoginUser(context *gin.Context) {
 	data, err := context.GetRawData()
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data provided"})
+		return
 	}
 	err = json.Unmarshal(data, loggedInUser)
+	context.JSON(http.StatusOK, gin.H{"msg": "successful login"})
 }

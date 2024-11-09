@@ -7,5 +7,5 @@ import (
 
 func RegisterRoutes(route *gin.Engine) {
 	route.POST("/register", controller.RegisterUser)
-	route.POST("/login")
+	route.POST("/login", controller.LoginUser)
 }
