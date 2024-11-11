@@ -32,7 +32,7 @@ func (u *User) AddUser() error {
 		return err
 	}
 
-	_, err = stmt.Exec(u.Username, u.Email, hPsw)
+	_, err = stmt.Exec(u.Email, u.Username, hPsw)
 
 	if err != nil {
 		return err
@@ -63,6 +63,7 @@ func (u *User) getSingleUser() (*User, error) {
 	row := database.Db.QueryRow(query, u.Username)
 	err := row.Scan(&user.Username, &user.Email, &user.Password, &user.ID)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	return &user, nil
