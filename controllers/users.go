@@ -1,42 +1,52 @@
 package controller
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"example.com/questions/models"
-	"example.com/questions/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterUser(context *gin.Context) {
 
-	newUser := models.User{}
-	err := context.ShouldBindJSON(&newUser)
+	var user models.User
+
+	err := context.ShouldBindJSON(&user)
+
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data provided"})
+		fmt.Println("1", err)
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data."})
 		return
 	}
 
-	err = newUser.AddUser()
+	err = user.AddUser()
 
 	if err != nil {
-		if customErr, ok := err.(*utils.CustomError); ok {
-			context.JSON(customErr.StatusCode, gin.H{"error": customErr.Message})
-			return
-		}
-		context.JSON(500, gin.H{"error": "internal server error"})
+		fmt.Println("2", err)
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not save user."})
 		return
 	}
+
+	context.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
 }
 
 func LoginUser(context *gin.Context) {
-	loggedInUser := models.User{}
-	data, err := context.GetRawData()
+	var loggedInUser models.User
+
+	err := context.ShouldBindJSON(&loggedInUser)
+
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Data provided"})
 		return
 	}
-	err = json.Unmarshal(data, loggedInUser)
+	err = loggedInUser.LoginUser()
+
+	if err != nil {
+		fmt.Println(err)
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Internal server error"})
+		return
+	}
+
 	context.JSON(http.StatusOK, gin.H{"msg": "successful login"})
 }

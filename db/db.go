@@ -37,8 +37,9 @@ func createTables() {
 	userTable := `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
-		username VARCHAR(100) NOT NULL,
-		password VARCHAR(100) UNIQUE NOT NULL,
+		email TEXT NOT NULL UNIQUE,
+		username TEXT NOT NULL,
+		password TEXT  NOT NULL UNIQUE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
 
@@ -55,8 +56,8 @@ func createTables() {
 	CREATE TABLE IF NOT EXISTS credentials (
 		id SERIAL PRIMARY KEY,
 		user_id INT REFERENCES users(id),
-		country VARCHAR(100) NOT NULL,
-		city VARCHAR(100) NOT NULL,
+		country TEXT NOT NULL,
+		city TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	`

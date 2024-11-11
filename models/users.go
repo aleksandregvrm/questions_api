@@ -10,12 +10,14 @@ import (
 )
 
 type User struct {
+	ID       int64
+	Email    string
 	Username string `binding:"required"`
 	Password string `binding:"required"`
 }
 
 func (u *User) AddUser() error {
-	query := "INSERT INTO users(email, password) VALUES (?, ?)"
+	query := "INSERT INTO users(email, username, password) VALUES ($1, $2, $3)"
 	stmt, err := database.Db.Prepare(query)
 
 	if err != nil {
@@ -24,37 +26,42 @@ func (u *User) AddUser() error {
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(u.Username, u.Password)
+	hPsw, err := utils.HashPassword(u.Password)
 
 	if err != nil {
 		return err
 	}
-	fmt.Println(result)
 
+	_, err = stmt.Exec(u.Username, u.Email, hPsw)
+
+	if err != nil {
+		return err
+	}
 	return err
-
 }
 
 func (u *User) LoginUser() error {
 	if len(u.Password) < 8 {
 		return utils.NewCustomError("Invalid credentials", 400)
 	}
-	dbUser, err := getSingleUser(u.Username)
+	dbUser, err := u.getSingleUser()
 	if err != nil {
+		fmt.Println(err)
 		return utils.NewCustomError("Invalid Credentials", 400)
 	}
-	if !utils.ComparePasswords(u.Password, dbUser.Password) {
+	fmt.Println(dbUser)
+	comparedPassBoolean := utils.ComparePasswords(u.Password, dbUser.Password)
+	if !comparedPassBoolean {
 		return utils.NewCustomError("Invalid Credentials", 400)
 	}
 	return nil
 }
 
-func getSingleUser(username string) (*User, error) {
-
+func (u *User) getSingleUser() (*User, error) {
 	var user User
-	query := "SELECT * FROM users WHERE username = ?"
-	row := database.Db.QueryRow(query, username)
-	err := row.Scan(&user.Username, &user.Password)
+	query := "SELECT username,email,password,id FROM users WHERE username = $1"
+	row := database.Db.QueryRow(query, u.Username)
+	err := row.Scan(&user.Username, &user.Email, &user.Password, &user.ID)
 	if err != nil {
 		return nil, err
 	}
