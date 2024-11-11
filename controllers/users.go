@@ -44,7 +44,7 @@ func LoginUser(context *gin.Context) {
 
 	if err != nil {
 		fmt.Println(err)
-		context.JSON(http.StatusBadRequest, gin.H{"error": "Internal server error"})
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
